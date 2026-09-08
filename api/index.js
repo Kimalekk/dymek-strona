@@ -1,5 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
+const path = require('path');
 const { 
   getProducts, 
   saveProducts, 
@@ -134,6 +135,14 @@ app.post('/api/admin/wallet', adminAuth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Błąd zapisu portfela' });
   }
+});
+
+// ===== FALLBACK DLA SPA I STRONY GŁÓWNEJ =====
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Nie znaleziono endpointu API' });
+  }
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Eksport aplikacji dla Vercela
