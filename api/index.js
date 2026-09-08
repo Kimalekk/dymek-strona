@@ -251,3 +251,11 @@ app.get('/api/stats', adminAuth, async (req, res) => {
 
 // ===== EXPORT FOR VERCEL =====
 module.exports = app;
+
+// ===== FALLBACK FOR SPA / FRONTEND =====
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Nie znaleziono endpointu API' });
+  }
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
