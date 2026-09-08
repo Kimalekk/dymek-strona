@@ -7,24 +7,22 @@ const {
   saveOrders, 
   getWallet, 
   saveWallet 
-} = require('./db');
+} = require('../db');
 
 const app = express();
 
 app.use(express.json());
 
-// Bezpieczne sprawdzanie hasła
+// Bezpieczne sprawdzanie hasła admina
 function verifyPass(inputPass) {
   const envPass = process.env.ADMIN_PASS || 'dymek123!@';
   const fallbackPass = 'dymek2024';
 
   const passStr = String(inputPass || '').trim();
-
-  // Akceptuje hasło ze zmiennych środowiskowych, z .env lub domyślne fallbackowe
   return passStr === envPass.trim() || passStr === fallbackPass;
 }
 
-// Middleware do weryfikacji tokena / hasła admina w nagłówku
+// Middleware do weryfikacji tokena / hasła admina
 function adminAuth(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -91,9 +89,9 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// ===== ENDPOINTY ADMINISTRATORA (Wymagają nagłówka Authorization) =====
+// ===== ENDPOINTY ADMINISTRATORA =====
 
-// Logowanie do panelu (weryfikacja hasła)
+// Logowanie do panelu admina
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
   if (verifyPass(password)) {
@@ -103,7 +101,7 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-// Pobieranie pełnej listy zamówień
+// Pobieranie zamówień
 app.get('/api/admin/orders', adminAuth, async (req, res) => {
   try {
     const orders = await getOrders();
@@ -113,7 +111,7 @@ app.get('/api/admin/orders', adminAuth, async (req, res) => {
   }
 });
 
-// Zapis/Aktualizacja produktów
+// Zapis produktów
 app.post('/api/admin/products', adminAuth, async (req, res) => {
   try {
     const products = req.body;
@@ -124,7 +122,7 @@ app.post('/api/admin/products', adminAuth, async (req, res) => {
   }
 });
 
-// Zapis/Aktualizacja adresu portfela krypto
+// Zapis adresu portfela krypto
 app.post('/api/admin/wallet', adminAuth, async (req, res) => {
   try {
     const { address } = req.body;
@@ -138,5 +136,5 @@ app.post('/api/admin/wallet', adminAuth, async (req, res) => {
   }
 });
 
-// Eksport dla Serverless Functions Vercela
+// Eksport aplikacji dla Vercela
 module.exports = app;
