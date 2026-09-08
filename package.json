@@ -1,0 +1,24 @@
+{
+  "name": "dymek-shop",
+  "version": "1.0.0",
+  "description": "Sklep dymek.xyz - e-papierosy",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "vercel:dev": "vercel dev",
+    "vercel:deploy": "vercel --prod",
+    "deploy": "pm2 start ecosystem.config.js && pm2 save",
+    "restart": "pm2 restart dymek-shop",
+    "logs": "pm2 logs dymek-shop"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "uuid": "^9.0.0"
+  }
+}
