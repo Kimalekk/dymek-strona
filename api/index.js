@@ -13,7 +13,6 @@ const app = express();
 app.use(express.json({ limit: '2mb' }));
 
 // ===== SEED (tylko gdy baza pusta) =====
-const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 let seedPromise = null;
 
 function seedData() {
@@ -251,14 +250,16 @@ app.get('/api/stats', adminAuth, async (req, res) => {
 });
 
 // ===== STATYCZNE + SPA =====
-app.use('/assets', express.static(path.join(PUBLIC_DIR, 'assets')));
-app.use(express.static(PUBLIC_DIR));
+const ROOT = path.join(__dirname, '..');
+app.get('/', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
+app.get('/styles.css', (req, res) => res.sendFile(path.join(ROOT, 'styles.css')));
+app.get('/shop.js', (req, res) => res.sendFile(path.join(ROOT, 'shop.js')));
 
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Nie znaleziono' });
   }
-  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+  res.sendFile(path.join(ROOT, 'index.html'));
 });
 
 module.exports = app;
