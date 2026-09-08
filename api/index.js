@@ -249,17 +249,5 @@ app.get('/api/stats', adminAuth, async (req, res) => {
   });
 });
 
-// ===== STATYCZNE + SPA =====
-const ROOT = path.join(__dirname, '..');
-app.get('/', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
-app.get('/styles.css', (req, res) => res.sendFile(path.join(ROOT, 'styles.css')));
-app.get('/shop.js', (req, res) => res.sendFile(path.join(ROOT, 'shop.js')));
-
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'Nie znaleziono' });
-  }
-  res.sendFile(path.join(ROOT, 'index.html'));
-});
-
+// ===== EXPORT FOR VERCEL =====
 module.exports = app;
