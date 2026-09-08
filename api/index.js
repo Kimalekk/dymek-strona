@@ -13,26 +13,28 @@ const {
 const app = express();
 
 app.use(express.json());
-
-// Serwowanie plików statycznych z folderu public
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-// Bezpieczne sprawdzanie hasła admina
+// Bezpieczna i odporna na błędy weryfikacja hasła
 function verifyPass(inputPass) {
-  const envPass = process.env.ADMIN_PASS || 'dymek123!@';
-  const fallbackPass = 'dymek2024';
+  if (!inputPass) return false;
 
-  const passStr = String(inputPass || '').trim();
-  return passStr === envPass.trim() || passStr === fallbackPass;
+  const cleanInput = String(inputPass).trim();
+  const envPass = String(process.env.ADMIN_PASS || '').trim();
+
+  // Akceptowane warianty
+  const validPasswords = [
+    'dymek123!@',
+    'dymek2024',
+    envPass
+  ].filter(Boolean);
+
+  return validPasswords.includes(cleanInput);
 }
 
-// Middleware do weryfikacji tokena / hasła admina
+// Middleware autoryzacji nagłówka
 function adminAuth(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Brak nagłówka Authorization' });
-  }
-
+  const authHeader = req.headers.authorization || '';
   const token = authHeader.replace('Bearer ', '').trim();
 
   if (!verifyPass(token)) {
@@ -42,15 +44,14 @@ function adminAuth(req, res, next) {
   next();
 }
 
-// ===== PUBLICZNE ENDPOINTY API =====
+// ===== ENDPOINTY PUBLICZNE =====
 
 app.get('/api/products', async (req, res) => {
   try {
     const products = await getProducts();
     res.json(products);
   } catch (err) {
-    console.error('Błąd pobierania produktów:', err);
-    res.status(500).json({ error: 'Błąd serwera' });
+    res.status(500).json({ error: 'Błąd pobierania produktów' });
   }
 });
 
@@ -59,8 +60,7 @@ app.get('/api/wallet-public', async (req, res) => {
     const wallet = await getWallet();
     res.json({ address: wallet.address || process.env.WALLET_ADDRESS || 'bc1qxyzcryptoexampleaddress1234567890' });
   } catch (err) {
-    console.error('Błąd pobierania portfela:', err);
-    res.status(500).json({ error: 'Błąd serwera' });
+    res.status(500).json({ error: 'Błąd pobierania portfela' });
   }
 });
 
@@ -68,7 +68,7 @@ app.post('/api/orders', async (req, res) => {
   try {
     const { items, total } = req.body;
     if (!items || !items.length) {
-      return res.status(400).json({ error: 'Koszyk nie może być pusty' });
+      return res.status(400).json({ error: 'Koszyk jest pusty' });
     }
 
     const orders = await getOrders();
@@ -85,8 +85,7 @@ app.post('/api/orders', async (req, res) => {
 
     res.status(201).json(newOrder);
   } catch (err) {
-    console.error('Błąd tworzenia zamówienia:', err);
-    res.status(500).json({ error: 'Błąd podczas składania zamówienia' });
+    res.status(500).json({ error: 'Błąd tworzenia zamówienia' });
   }
 });
 
@@ -112,9 +111,8 @@ app.get('/api/admin/orders', adminAuth, async (req, res) => {
 
 app.post('/api/admin/products', adminAuth, async (req, res) => {
   try {
-    const products = req.body;
-    await saveProducts(products);
-    res.json({ success: true, message: 'Zapisano produkty' });
+    await saveProducts(req.body);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Błąd zapisu produktów' });
   }
@@ -122,18 +120,15 @@ app.post('/api/admin/products', adminAuth, async (req, res) => {
 
 app.post('/api/admin/wallet', adminAuth, async (req, res) => {
   try {
-    const { address } = req.body;
-    if (!address) {
-      return res.status(400).json({ error: 'Adres portfela jest wymagany' });
-    }
-    await saveWallet({ address });
-    res.json({ success: true, address });
+    if (!req.body.address) return res.status(400).json({ error: 'Brak adresu' });
+    await saveWallet({ address: req.body.address });
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Błąd zapisu portfela' });
   }
 });
 
-// ===== CATCH-ALL DLA SPA (KATEGORIE, ADMIN, KONTATK) =====
+// ===== FALLBACK DLA ROUTERA FRONTENDOWEGO =====
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'Nie znaleziono endpointu API' });
