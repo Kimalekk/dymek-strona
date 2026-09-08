@@ -14,6 +14,9 @@ const app = express();
 
 app.use(express.json());
 
+// Serwowanie plików statycznych z folderu public
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 // Bezpieczne sprawdzanie hasła admina
 function verifyPass(inputPass) {
   const envPass = process.env.ADMIN_PASS || 'dymek123!@';
@@ -39,9 +42,8 @@ function adminAuth(req, res, next) {
   next();
 }
 
-// ===== PUBLICZNE ENDPOINTY =====
+// ===== PUBLICZNE ENDPOINTY API =====
 
-// Pobieranie listy produktów
 app.get('/api/products', async (req, res) => {
   try {
     const products = await getProducts();
@@ -52,7 +54,6 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// Pobieranie publicznego adresu portfela
 app.get('/api/wallet-public', async (req, res) => {
   try {
     const wallet = await getWallet();
@@ -63,7 +64,6 @@ app.get('/api/wallet-public', async (req, res) => {
   }
 });
 
-// Składanie nowego zamówienia
 app.post('/api/orders', async (req, res) => {
   try {
     const { items, total } = req.body;
@@ -92,7 +92,6 @@ app.post('/api/orders', async (req, res) => {
 
 // ===== ENDPOINTY ADMINISTRATORA =====
 
-// Logowanie do panelu admina
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
   if (verifyPass(password)) {
@@ -102,7 +101,6 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-// Pobieranie zamówień
 app.get('/api/admin/orders', adminAuth, async (req, res) => {
   try {
     const orders = await getOrders();
@@ -112,7 +110,6 @@ app.get('/api/admin/orders', adminAuth, async (req, res) => {
   }
 });
 
-// Zapis produktów
 app.post('/api/admin/products', adminAuth, async (req, res) => {
   try {
     const products = req.body;
@@ -123,7 +120,6 @@ app.post('/api/admin/products', adminAuth, async (req, res) => {
   }
 });
 
-// Zapis adresu portfela krypto
 app.post('/api/admin/wallet', adminAuth, async (req, res) => {
   try {
     const { address } = req.body;
@@ -137,13 +133,12 @@ app.post('/api/admin/wallet', adminAuth, async (req, res) => {
   }
 });
 
-// ===== FALLBACK DLA SPA I STRONY GŁÓWNEJ =====
+// ===== CATCH-ALL DLA SPA (KATEGORIE, ADMIN, KONTATK) =====
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'Nie znaleziono endpointu API' });
   }
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+  res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
-// Eksport aplikacji dla Vercela
 module.exports = app;
